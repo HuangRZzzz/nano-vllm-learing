@@ -274,11 +274,12 @@ class ModelRunner:
         )
         return input_ids, positions
 
+    def run(self, prefill_seqs: list[Sequence], decode_seqs: list[Sequence]) :
+        input_ids, positions = self.prepare_mixed(prefill_seqs, decode_seqs)
 
-    def run(self, seqs: list[Sequence], is_prefill: bool) -> list[int]:
-        input_ids, positions = self.prepare_prefill(seqs) if is_prefill else self.prepare_decode(seqs)
-        temperatures = self.prepare_sample(seqs) if self.rank == 0 else None
-        logits = self.run_model(input_ids, positions, is_prefill)
+        temperatures = self.prepare_sample(prefill_seqs,decode_seqs) if self.rank == 0 else None
+
+        logits = self.run_model(input_ids, positions, True)
         token_ids = self.sampler(logits, temperatures).tolist() if self.rank == 0 else None
         reset_context()
         return token_ids
@@ -286,9 +287,9 @@ class ModelRunner:
 
 
 
-    def prepare_sample(self, seqs: list[Sequence]):
+    def prepare_sample(self, prefill_seqs: list[Sequence], decode_seqs: list[Sequence]):
         temperatures = []
-        for seq in seqs:
+        for seq in prefill_seqs + decode_seqs:
             temperatures.append(seq.temperature)
         temperatures = torch.tensor(temperatures, dtype=torch.float32, pin_memory=True).cuda(non_blocking=True)
         return temperatures

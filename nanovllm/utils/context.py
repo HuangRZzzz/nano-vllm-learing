@@ -4,7 +4,7 @@ import torch
 @dataclass
 class Context:
     is_prefill: bool = False
-    is_mixed: bool = False  # [新增] 混合批处理标志
+    is_mixed: bool = True  # [新增] 混合批处理标志
     
     # 混合模式下的分界线
     num_prefill_tokens: int = 0  # [新增] Prefill 部分的 Token 数量
