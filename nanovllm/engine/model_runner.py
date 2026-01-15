@@ -184,7 +184,6 @@ class ModelRunner:
         # 在 ModelRunner 类中添加/修改
 
     def prepare_mixed(self, prefill_seqs, decode_seqs):
-        """同时准备 Prefill 和 Decode 的数据，并拼接"""
         
         # --- 1. 准备 Prefill 部分 ---
         p_input_ids = []
