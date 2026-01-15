@@ -7,7 +7,7 @@
 </p>
 
 # Nano-vLLM
-
+# nano-vllm
 A lightweight vLLM implementation built from scratch.
 
 ## Key Features
@@ -17,7 +17,6 @@ A lightweight vLLM implementation built from scratch.
 * ⚡ **Optimization Suite** - Prefix caching, Tensor Parallelism, Torch compilation, CUDA graph, etc.
 
 ## Installation
-
 ```bash
 pip install git+https://github.com/GeeeekExplorer/nano-vllm.git
 ```
