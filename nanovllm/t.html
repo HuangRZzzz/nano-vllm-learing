@@ -1,0 +1,297 @@
+import React, { useRef } from 'react';
+import { FileText, Users, BarChart3, Scale, Shield, AlertCircle, Phone, Globe, CheckCircle2, XCircle, HelpCircle, Mail, ChevronDown, MapPin } from 'lucide-react';
+
+const AnnualReport = () => {
+  const printRef = useRef(null);
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-200 p-4 font-sans print:p-0 print:bg-white flex justify-center">
+      {/* Control Bar - Hidden in Print */}
+      <div className="fixed top-4 right-4 z-50 print:hidden">
+        <button 
+          onClick={handlePrint}
+          className="bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-6 rounded-full shadow-lg flex items-center gap-2 transition-transform hover:scale-105"
+        >
+          <FileText size={18} />
+          下载/打印长图
+        </button>
+      </div>
+
+      {/* Main Report Container - Mobile Long Image Style */}
+      <div 
+        ref={printRef}
+        className="w-full max-w-[700px] bg-white shadow-2xl overflow-hidden print:shadow-none print:w-full print:max-w-none"
+      >
+        
+        {/* 1. Header Section */}
+        <header className="relative bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-red-700 via-red-800 to-red-900 text-white pb-16 pt-20 px-8 text-center overflow-hidden">
+          {/* Decorative background circles */}
+          <div className="absolute top-0 left-0 w-64 h-64 bg-white opacity-5 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-yellow-500 opacity-5 rounded-full translate-x-1/3 translate-y-1/3"></div>
+          
+          <div className="relative z-10">
+            <div className="inline-block border-b-2 border-yellow-400 pb-2 mb-4">
+               <h2 className="text-lg md:text-xl font-medium tracking-[0.2em] text-yellow-100">淳安县威坪镇人民政府</h2>
+            </div>
+            <h1 className="text-4xl md:text-5xl font-black mb-6 tracking-wide leading-tight drop-shadow-md">
+              2025年度<br/>
+              <span className="text-3xl md:text-4xl">政府信息公开工作年度报告</span>
+            </h1>
+            
+            <div className="inline-flex items-center justify-center bg-red-900/50 backdrop-blur-sm border border-red-500/30 px-6 py-2 rounded-full mt-2">
+              <span className="text-yellow-400 font-mono font-bold mr-2">?</span>
+              <span className="font-medium text-red-50 text-sm">2025年1月1日 - 2025年12月31日</span>
+            </div>
+          </div>
+          
+          {/* Bottom curve */}
+          <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-[0]">
+            <svg className="relative block w-[calc(100%+1.3px)] h-[50px]" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+                <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" className="fill-white"></path>
+            </svg>
+          </div>
+        </header>
+
+        {/* 2. 总体情况 */}
+        <section className="px-8 py-6">
+          <SectionHeader number="01" title="总体情况" icon={<FileText className="text-red-600" size={24} />} />
+          
+          <div className="text-gray-700 leading-relaxed text-justify mb-8 bg-red-50 p-6 rounded-2xl border border-red-100">
+            <p className="indent-8">
+              2025年，威坪镇坚持以习近平新时代中国特色社会主义思想为指导，严格落实《中华人民共和国政府信息公开条例》，紧紧围绕淳安县政务公开工作要点，努力将“全过程人民民主”融入政务公开各环节，加强赋能政社互通意见反馈机制，助推政策资源优化配置与经济社会高质量发展。
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+             <SummaryCard title="主动公开" count="27" unit="条" color="red" desc="门户网站发布" />
+             <SummaryCard title="依申请公开" count="2" unit="件" color="yellow" desc="按期答复率 100%" />
+          </div>
+
+          <div className="mt-6 space-y-4">
+             <DetailBox title="政府信息管理" icon={<Shield size={18}/>}>
+               <p>? 强化资源标准化管理，严格<span className="text-red-700 font-bold">“三审三校”</span>。</p>
+               <p>? 及时更新重大决策征求意见，清理废止文件。</p>
+             </DetailBox>
+             <DetailBox title="平台建设" icon={<Globe size={18}/>}>
+               <p>? 统一安装“亚信”保护软件，定期漏洞扫描。</p>
+               <p>? 丰富公开形式，优化内容风格，让政策通俗易懂。</p>
+             </DetailBox>
+             <DetailBox title="监督保障" icon={<Scale size={18}/>}>
+               <p>? 建立政务公开目录清单式监督。</p>
+               <p>? 持续开展社会评议，设置意见箱与监督电话。</p>
+             </DetailBox>
+          </div>
+        </section>
+
+        {/* 3. 主动公开数据 */}
+        <section className="px-8 py-6 bg-gray-50">
+          <SectionHeader number="02" title="主动公开政府信息" icon={<BarChart3 className="text-red-600" size={24} />} />
+          
+          <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
+             <table className="w-full text-sm">
+                <thead className="bg-red-50 text-red-900 font-bold">
+                   <tr>
+                      <th className="py-3 px-4 text-left">信息内容</th>
+                      <th className="py-3 px-4 text-right">数据</th>
+                   </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                   <TableRow label="规章 (现行有效)" value="0" />
+                   <TableRow label="行政规范性文件 (现行有效)" value="3" />
+                   <TableRow label="行政许可 (本年处理)" value="105" />
+                   <TableRow label="行政处罚 (本年处理)" value="17" />
+                   <TableRow label="行政强制 (本年处理)" value="0" />
+                   <TableRow label="行政事业性收费 (万元)" value="0" />
+                </tbody>
+             </table>
+          </div>
+          
+          {/* Chart visual representation for key data */}
+          <div className="mt-4 grid grid-cols-3 gap-2">
+             <div className="bg-white p-3 rounded-lg border border-gray-100 text-center">
+                <div className="text-xs text-gray-500 mb-1">重大事项</div>
+                <div className="text-xl font-bold text-red-600">7</div>
+             </div>
+             <div className="bg-white p-3 rounded-lg border border-gray-100 text-center">
+                <div className="text-xs text-gray-500 mb-1">规划计划</div>
+                <div className="text-xl font-bold text-red-600">4</div>
+             </div>
+             <div className="bg-white p-3 rounded-lg border border-gray-100 text-center">
+                <div className="text-xs text-gray-500 mb-1">人事信息</div>
+                <div className="text-xl font-bold text-red-600">3</div>
+             </div>
+          </div>
+        </section>
+
+        {/* 4. 依申请公开 */}
+        <section className="px-8 py-6">
+          <SectionHeader number="03" title="收到和处理政府信息公开申请" icon={<Mail className="text-red-600" size={24} />} />
+          
+          <div className="flex justify-between items-center bg-yellow-50 rounded-xl p-4 mb-4 border border-yellow-100">
+             <div className="text-center flex-1 border-r border-yellow-200">
+                <div className="text-xs text-gray-500">本年新收</div>
+                <div className="text-2xl font-bold text-gray-800">2<span className="text-xs font-normal">件</span></div>
+             </div>
+             <div className="text-center flex-1 border-r border-yellow-200">
+                <div className="text-xs text-gray-500">上年结转</div>
+                <div className="text-2xl font-bold text-gray-800">0</div>
+             </div>
+             <div className="text-center flex-1">
+                <div className="text-xs text-gray-500">结转下年</div>
+                <div className="text-2xl font-bold text-gray-800">0</div>
+             </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+             <div className="bg-gray-100 px-4 py-2 text-xs font-bold text-gray-500">办理结果明细</div>
+             <div className="p-0">
+                <table className="w-full text-sm">
+                   <tbody className="divide-y divide-gray-100">
+                      <TableRow label="予以公开" value="0" />
+                      <TableRow label="部分公开" value="0" />
+                      <TableRow label="不予公开 (四类过程性信息)" value="1" highlight />
+                      <TableRow label="无法提供 (本机关不掌握)" value="1" highlight />
+                      <TableRow label="不予处理" value="0" />
+                      <TableRow label="其他处理" value="0" />
+                   </tbody>
+                   <tfoot className="bg-red-50 font-bold text-red-900">
+                      <tr>
+                         <td className="px-4 py-2">总计</td>
+                         <td className="px-4 py-2 text-right">2</td>
+                      </tr>
+                   </tfoot>
+                </table>
+             </div>
+          </div>
+        </section>
+
+        {/* 5. 行政复议 */}
+        <section className="px-8 py-6 bg-gray-50">
+          <SectionHeader number="04" title="行政复议与诉讼" icon={<Scale className="text-red-600" size={24} />} />
+          
+          <div className="grid grid-cols-2 gap-4">
+             <div className="bg-white p-5 rounded-xl border-t-4 border-red-500 shadow-sm text-center">
+                <div className="text-gray-500 text-sm mb-2">行政复议</div>
+                <div className="text-3xl font-bold text-red-600 mb-1">2<span className="text-sm text-gray-400 font-normal ml-1">件</span></div>
+                <div className="inline-block bg-gray-100 px-2 py-1 rounded text-xs text-gray-500">结果：申请人撤销</div>
+             </div>
+             <div className="bg-white p-5 rounded-xl border-t-4 border-gray-300 shadow-sm text-center opacity-80">
+                <div className="text-gray-500 text-sm mb-2">行政诉讼</div>
+                <div className="text-3xl font-bold text-gray-400 mb-1">0<span className="text-sm font-normal ml-1">件</span></div>
+                <div className="inline-block bg-gray-100 px-2 py-1 rounded text-xs text-gray-500">无诉讼案件</div>
+             </div>
+          </div>
+        </section>
+
+        {/* 6. 问题与改进 */}
+        <section className="px-8 py-6">
+          <SectionHeader number="05" title="问题与改进" icon={<AlertCircle className="text-red-600" size={24} />} />
+          
+          <div className="space-y-4">
+             <div className="relative pl-6 border-l-2 border-red-200">
+                <div className="absolute left-[-9px] top-0 w-4 h-4 rounded-full bg-red-500 border-4 border-white shadow-sm"></div>
+                <h3 className="font-bold text-gray-800 text-lg mb-2">信息深度有待挖掘</h3>
+                <div className="bg-orange-50 p-3 rounded-lg text-sm text-gray-700">
+                   <p className="mb-1"><strong>对策：</strong>加强对社会热点、舆情焦点的识别准度与抓取力度。</p>
+                   <p><strong>措施：</strong>组建舆论分析专组，提出针对性建议与举措。</p>
+                </div>
+             </div>
+             
+             <div className="relative pl-6 border-l-2 border-red-200">
+                <div className="absolute left-[-9px] top-0 w-4 h-4 rounded-full bg-red-500 border-4 border-white shadow-sm"></div>
+                <h3 className="font-bold text-gray-800 text-lg mb-2">公众参与有待提升</h3>
+                <div className="bg-orange-50 p-3 rounded-lg text-sm text-gray-700">
+                   <p className="mb-1"><strong>对策：</strong>提高信息可读性，丰富公开形式（图文、视频）。</p>
+                   <p><strong>措施：</strong>拓宽渠道，增设专项投诉热线、举报电话及微信小程序。</p>
+                </div>
+             </div>
+          </div>
+        </section>
+
+        {/* 7. Footer */}
+        <footer className="bg-[#2c1810] text-gray-400 py-10 px-8">
+           <div className="border-b border-gray-700 pb-6 mb-6">
+              <h4 className="text-white font-bold mb-4 flex items-center gap-2">
+                 <AlertCircle size={16} className="text-yellow-500"/>
+                 其他事项
+              </h4>
+              <div className="grid grid-cols-1 gap-2 text-sm">
+                 <p>? 本年度未收取信息处理费</p>
+                 <p>? 统计期限：2025年1月1日 至 2025年12月31日</p>
+              </div>
+           </div>
+           
+           <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+              <div className="text-sm space-y-2">
+                 <p className="flex items-center gap-2 text-white"><Phone size={14} className="text-yellow-500"/> 0571-89602586</p>
+                 <p className="flex items-center gap-2 text-white"><MapPin size={14} className="text-yellow-500"/> 淳安县威坪镇兴华街321号</p>
+                 <p className="text-xs text-gray-500 pl-6">邮编：311715</p>
+              </div>
+              
+              <div className="text-right">
+                 <div className="text-lg font-bold text-white tracking-widest">淳安县威坪镇人民政府</div>
+                 <div className="text-sm text-gray-500 mt-1">2026年1月14日</div>
+              </div>
+           </div>
+        </footer>
+
+      </div>
+    </div>
+  );
+};
+
+// Sub-components for cleaner code
+const SectionHeader = ({ number, title, icon }) => (
+  <div className="flex items-center gap-3 mb-6">
+    <div className="font-black text-4xl text-gray-200 italic font-serif leading-none select-none">{number}</div>
+    <div className="flex-1">
+       <div className="flex items-center gap-2 text-xl font-bold text-gray-800">
+          {title}
+       </div>
+       <div className="h-1 w-12 bg-red-600 mt-1 rounded-full"></div>
+    </div>
+    <div className="bg-red-50 p-2 rounded-full">
+       {icon}
+    </div>
+  </div>
+);
+
+const SummaryCard = ({ title, count, unit, color, desc }) => {
+   const colors = {
+      red: 'bg-red-50 text-red-700 border-red-100',
+      yellow: 'bg-yellow-50 text-yellow-700 border-yellow-100'
+   };
+   
+   return (
+      <div className={`p-4 rounded-xl border ${colors[color]} text-center`}>
+         <div className="text-sm font-bold opacity-80 mb-1">{title}</div>
+         <div className="text-4xl font-black mb-1">{count}<span className="text-sm font-normal ml-1 text-gray-500">{unit}</span></div>
+         <div className="text-xs opacity-60">{desc}</div>
+      </div>
+   );
+};
+
+const DetailBox = ({ title, icon, children }) => (
+   <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+      <div className="flex items-center gap-2 mb-2 font-bold text-gray-800">
+         <div className="text-red-500">{icon}</div>
+         {title}
+      </div>
+      <div className="text-sm text-gray-600 space-y-1 pl-6">
+         {children}
+      </div>
+   </div>
+);
+
+const TableRow = ({ label, value, highlight = false }) => (
+   <tr className={highlight ? "bg-red-50/50" : ""}>
+      <td className={`px-4 py-3 ${highlight ? "text-red-900 font-medium" : "text-gray-700"}`}>{label}</td>
+      <td className={`px-4 py-3 text-right font-bold ${highlight ? "text-red-700" : "text-gray-900"}`}>{value}</td>
+   </tr>
+);
+
+export default AnnualReport;
