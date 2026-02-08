@@ -9,17 +9,24 @@ from nanovllm.utils.context import get_context
 
 @triton.jit
 def store_kvcache_kernel(
-    key_ptr,
-    key_stride,
+    key_ptr, 
+    key_stride, #存入的地址
     value_ptr,
     value_stride,
-    k_cache_ptr,
+    k_cache_ptr,  
     v_cache_ptr,
     slot_mapping_ptr,
     D: tl.constexpr,
 ):
+    
+    """
+        读取存储在kvcache中的key和value，并存入对应的位置
+        关键点在于 slot_mapping_ptr 指向的地址中存储了每个key/value应该存入kvcache的哪个slot
+        在scheduler调度程序中，只指定了slot_mapping中哪些位置需要存储，哪些位置不需要存储（-1表示不存储），具体如何存储的指令，在store_kvcache_kernel中实现
+    """
+        
     idx = tl.program_id(0)
-    slot = tl.load(slot_mapping_ptr + idx)
+    slot = tl.load(slot_mapping_ptr + idx) # 存入的索引地址
     if slot == -1: return
     key_offsets = idx * key_stride + tl.arange(0, D)
     value_offsets = idx * value_stride + tl.arange(0, D)
@@ -30,8 +37,11 @@ def store_kvcache_kernel(
     tl.store(v_cache_ptr + cache_offsets, value)
 
 
+
+
 def store_kvcache(key: torch.Tensor, value: torch.Tensor, k_cache: torch.Tensor, v_cache: torch.Tensor, slot_mapping: torch.Tensor):
     N, num_heads, head_dim = key.shape
+    #N = B * seq_len
     D = num_heads * head_dim
     assert key.stride(-1) == 1 and value.stride(-1) == 1
     assert key.stride(1) == head_dim and value.stride(1) == head_dim
@@ -55,63 +65,22 @@ class Attention(nn.Module):
         self.scale = scale
         self.num_kv_heads = num_kv_heads
         self.k_cache = self.v_cache = torch.tensor([])
+        
 
     def forward(self, q: torch.Tensor, k: torch.Tensor, v: torch.Tensor):
         context = get_context()
-        k_cache = self.k_cache
-        v_cache = self.v_cache
-        
-        # 1. ͳһд�� KV Cache (Mixed ģʽ�� slot_mapping �Ѿ�ƴ����)
-        if k_cache.numel() > 0:
+        k_cache, v_cache = self.k_cache, self.v_cache
+        if k_cache.numel() and v_cache.numel():
             store_kvcache(k, v, k_cache, v_cache, context.slot_mapping)
-        
-        # 2. ��ϼ����߼�
-        if context.is_mixed:
-            # �зֵ�
-            N = context.num_prefill_tokens
-            
-            # === Part A: Prefill (Varlen) ===
-            q_p = q[:N]
-            k_p = k[:N]
-            v_p = v[:N]
-            
-            o_p = flash_attn_varlen_func(
-                q_p, k_p, v_p,
-                cu_seqlens_q=context.cu_seqlens_q,
-                cu_seqlens_k=context.cu_seqlens_k,
-                max_seqlen_q=context.max_seqlen_q,
-                max_seqlen_k=context.max_seqlen_k,
-                softmax_scale=self.scale,
-                causal=True,
-                block_table=context.prefill_block_tables # ����� Prefix Cache
-            )
-            
-            # === Part B: Decode (Paged) ===
-            q_d = q[N:]
-            # Decode ����Ҫ k_d, v_d��ֱ�Ӷ� Cache
-            o_d = flash_attn_with_kvcache(
-                q_d.unsqueeze(1), # [Batch, 1, Head, Dim]
-                k_cache, v_cache,
-                block_table=context.decode_block_tables, # ������ decode ҳ��
-                cache_seqlens=context.context_lens,
-                softmax_scale=self.scale,
-                causal=True
-            )
-            
-            # 3. ƴ�ӽ��
-            return torch.cat([o_p.view(N, -1, self.num_heads * self.head_dim), 
-                              o_d.view(-1, 1, self.num_heads * self.head_dim).squeeze(1)])
-        
-        elif context.is_prefill:
-            k, v = k_cache, v_cache
+        if context.is_prefill:
+            if context.block_tables is not None:    # prefix cache
+                k, v = k_cache, v_cache
             o = flash_attn_varlen_func(q, k, v,
                                        max_seqlen_q=context.max_seqlen_q, cu_seqlens_q=context.cu_seqlens_q,
                                        max_seqlen_k=context.max_seqlen_k, cu_seqlens_k=context.cu_seqlens_k,
                                        softmax_scale=self.scale, causal=True, block_table=context.block_tables)
-        else:
+        else:    # decode
             o = flash_attn_with_kvcache(q.unsqueeze(1), k_cache, v_cache,
                                         cache_seqlens=context.context_lens, block_table=context.block_tables, 
                                         softmax_scale=self.scale, causal=True)
-
-
         return o

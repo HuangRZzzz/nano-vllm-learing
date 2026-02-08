@@ -10,6 +10,7 @@ from nanovllm.models.qwen3 import Qwen3ForCausalLM
 from nanovllm.layers.sampler import Sampler
 from nanovllm.utils.context import set_context, get_context, reset_context
 from nanovllm.utils.loader import load_model
+from torch.device import MetaDevice
 
 
 class ModelRunner:
@@ -28,7 +29,8 @@ class ModelRunner:
         default_dtype = torch.get_default_dtype()
         torch.set_default_dtype(hf_config.torch_dtype)
         torch.set_default_device("cuda")
-        self.model = Qwen3ForCausalLM(hf_config)
+        with torch.device("meta"):
+            self.model = Qwen3ForCausalLM(hf_config)
         load_model(self.model, config.model)
         self.sampler = Sampler()
         self.warmup_model()
@@ -145,7 +147,7 @@ class ModelRunner:
             max_seqlen_k = max(seqlen_k, max_seqlen_k)
             if not seq.block_table:    # warmup
                 continue
-            for i in range(seq.num_cached_blocks, seq.num_blocks):
+            for i in range(seq.num_cached_blocks, seq.num_blocks):  #num_block 是当前阶段存了多少个block，实时变化的
                 start = seq.block_table[i] * self.block_size
                 if i != seq.num_blocks - 1:
                     end = start + self.block_size
@@ -184,6 +186,7 @@ class ModelRunner:
         # 在 ModelRunner 类中添加/修改
 
     def prepare_mixed(self, prefill_seqs, decode_seqs):
+        """同时准备 Prefill 和 Decode 的数据，并拼接"""
         
         # --- 1. 准备 Prefill 部分 ---
         p_input_ids = []
@@ -273,12 +276,11 @@ class ModelRunner:
         )
         return input_ids, positions
 
-    def run(self, prefill_seqs: list[Sequence], decode_seqs: list[Sequence]) :
-        input_ids, positions = self.prepare_mixed(prefill_seqs, decode_seqs)
 
-        temperatures = self.prepare_sample(prefill_seqs,decode_seqs) if self.rank == 0 else None
-
-        logits = self.run_model(input_ids, positions, True)
+    def run(self, seqs: list[Sequence], is_prefill: bool) -> list[int]:
+        input_ids, positions = self.prepare_prefill(seqs) if is_prefill else self.prepare_decode(seqs)
+        temperatures = self.prepare_sample(seqs) if self.rank == 0 else None
+        logits = self.run_model(input_ids, positions, is_prefill)
         token_ids = self.sampler(logits, temperatures).tolist() if self.rank == 0 else None
         reset_context()
         return token_ids
@@ -286,9 +288,9 @@ class ModelRunner:
 
 
 
-    def prepare_sample(self, prefill_seqs: list[Sequence], decode_seqs: list[Sequence]):
+    def prepare_sample(self, seqs: list[Sequence]):
         temperatures = []
-        for seq in prefill_seqs + decode_seqs:
+        for seq in seqs:
             temperatures.append(seq.temperature)
         temperatures = torch.tensor(temperatures, dtype=torch.float32, pin_memory=True).cuda(non_blocking=True)
         return temperatures

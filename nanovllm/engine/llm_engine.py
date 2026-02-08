@@ -46,42 +46,13 @@ class LLMEngine:
         self.scheduler.add(seq)
 
     def step(self):
-        # 1. 调度：获取两组序列
-        prefill_seqs, decode_seqs = self.scheduler.schedule()
-        
-        # 2. 执行：传入两组序列
-        # 注意：ModelRunner.run 内部会将 input_ids 拼接为 [Prefill | Decode]
-        # 因此返回的 token_ids 顺序也是 [Prefill_Result | Decode_Result]
-        token_ids = self.model_runner.call("run", prefill_seqs, decode_seqs)
-        
-        # 3. [关键修改] 合并序列，且顺序必须与 input_ids 拼接顺序一致
-        all_seqs = prefill_seqs + decode_seqs
-        
-        # 4. 后处理：现在 all_seqs 和 token_ids 是一一对应的了
-        self.scheduler.postprocess(all_seqs, token_ids)
-        
-        # 5. [新增] Chunked Prefill 进度更新
-        # 必须手动更新进度，否则下次调度会重复跑这部分
-        for seq in prefill_seqs:
-            if hasattr(seq, "prefill_chunk_size"):
-                seq.num_cached_tokens += seq.prefill_chunk_size
-                # 清理标记，保持对象干净
-                del seq.prefill_chunk_size
-        
-        # 6. 收集输出 (只收集已完成的)
-        outputs = [(seq.seq_id, seq.completion_token_ids) for seq in all_seqs if seq.is_finished]
-        
-        # 7. 计算统计量 (用于 tqdm 进度条显示)
-        # 现在的 step 可能同时包含 Prefill 和 Decode，原有的简单的正负号逻辑不够用了
-        # 这里给出一个简单的兼容方案：优先显示 Prefill 吞吐
-        if prefill_seqs:
-            # 计算本次 Prefill 处理了多少 Token
-            num_tokens = sum(len(seq) - seq.num_cached_tokens for seq in prefill_seqs)
-        else:
-            # 如果只有 Decode，用负数表示 (兼容原有的 generate 函数逻辑)
-            num_tokens = -len(decode_seqs)
-            
+        seqs, is_prefill = self.scheduler.schedule()
+        token_ids = self.model_runner.call("run", seqs, is_prefill)
+        self.scheduler.postprocess(seqs, token_ids)
+        outputs = [(seq.seq_id, seq.completion_token_ids) for seq in seqs if seq.is_finished]
+        num_tokens = sum(len(seq) for seq in seqs) if is_prefill else -len(seqs)
         return outputs, num_tokens
+
 
     def is_finished(self):
         return self.scheduler.is_finished()
